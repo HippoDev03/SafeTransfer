@@ -1,5 +1,7 @@
 # SafeTransfer
 
+[![Build Status](https://jenkins.mwtw.net/job/SafeTransfer/badge/icon)](https://jenkins.mwtw.net/job/SafeTransfer/)
+
 An admin-only Paper/Folia plugin that transfers players to another Minecraft
 server using the vanilla **transfer packet** (`Player#transfer`) - but only
 after confirming the destination is actually up.
