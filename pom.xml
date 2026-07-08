@@ -13,6 +13,11 @@
 
     <properties>
         <java.version>21</java.version>
+        <!-- Standard property name other plugins (javadoc included) auto-detect the
+             language level from - without it, javadoc doesn't know we're on 21 and
+             fails to parse `record` declarations (a 16+ feature), a hard error that
+             was previously getting silently swallowed by failOnError=false below. -->
+        <maven.compiler.release>${java.version}</maven.compiler.release>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     </properties>
 
@@ -24,8 +29,7 @@
                 <artifactId>maven-compiler-plugin</artifactId>
                 <version>3.13.0</version>
                 <configuration>
-                    <source>${java.version}</source>
-                    <target>${java.version}</target>
+                    <release>${maven.compiler.release}</release>
                 </configuration>
             </plugin>
             <plugin>
@@ -46,11 +50,17 @@
                 <artifactId>maven-javadoc-plugin</artifactId>
                 <version>3.10.1</version>
                 <configuration>
+                    <!-- Explicit, rather than relying on auto-detection: this is what
+                         was silently failing before (see the maven.compiler.release
+                         property comment above). -->
+                    <source>${maven.compiler.release}</source>
                     <!-- Source has partial Javadoc coverage (internal implementation
                          classes are commented for maintainers, not doc-generation) -
-                         don't fail the CI build over missing tags/doclint nitpicks. -->
+                         don't fail the CI build over missing tags/doclint nitpicks -
+                         but DO fail on real generation errors (failOnError stays true)
+                         so a broken build shows up as a build failure, not a confusing
+                         "apidocs directory doesn't exist" error two stages later. -->
                     <doclint>none</doclint>
-                    <failOnError>false</failOnError>
                     <quiet>true</quiet>
                 </configuration>
             </plugin>
