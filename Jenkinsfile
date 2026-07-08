@@ -33,11 +33,11 @@ pipeline {
                 // rather than trusting a clean exit code alone.
                 sh 'mvn -B -ntp -e site'
                 script {
-                    if (!fileExists('target/site/index.html')) {
+                    if (!fileExists('target/site/apidocs/index.html')) {
                         error 'javadoc:javadoc reported success but target/site/apidocs/index.html was not produced - check the mvn output above for the real error.'
                     }
                 }
-                javadoc javadocDir: 'target/site/', keepAll: true
+                javadoc javadocDir: 'target/site/apidocs/', keepAll: true
             }
         }
     }

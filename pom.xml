@@ -91,6 +91,21 @@
                      what the default site plugin actually provides. -->
                 <version>3.4.5</version>
             </plugin>
+            <plugin>
+                <!-- Must also be declared here (not just under build/plugins): `mvn site`
+                     only runs reports registered in <reporting>, so without this the
+                     apidocs/ folder was never generated - target/site only ever got the
+                     project-info reports (index/summary/dependencies), and the Jenkinsfile's
+                     `fileExists('target/site/index.html')` check kept passing because that
+                     file is produced by project-info-reports regardless. -->
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-javadoc-plugin</artifactId>
+                <version>3.10.1</version>
+                <configuration>
+                    <source>${maven.compiler.release}</source>
+                    <doclint>none</doclint>
+                </configuration>
+            </plugin>
         </plugins>
     </reporting>
 
