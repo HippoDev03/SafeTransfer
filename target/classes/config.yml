@@ -1,0 +1,122 @@
+# ============================================================================
+#  SafeTransfer configuration
+# ============================================================================
+#
+# SafeTransfer sends players to another server using the vanilla "transfer"
+# packet (Player#transfer), but only after resolving the destination the way
+# a real client would (following SRV and CNAME records) and confirming it is
+# actually up with a real Minecraft status ping. See the plugin README for
+# the full explanation of that resolve -> ping -> transfer flow.
+#
+# Changes to this file take effect on the next server start / plugin reload.
+# This file is NOT auto-regenerated once it exists, so new keys added by a
+# plugin update will need to be added here manually (check the README's
+# changelog / diff against the shipped default).
+
+# ----------------------------------------------------------------------------
+# Pre-transfer status ping timeouts
+# ----------------------------------------------------------------------------
+# Before transferring anyone, SafeTransfer opens a raw TCP connection to the
+# resolved destination and performs a Minecraft status ping. If either step
+# doesn't complete within its timeout, the whole transfer is aborted and
+# nobody is moved - see the "aborted" message below.
+
+# How long (in milliseconds) to wait for the initial TCP connection to the
+# destination to succeed. Raise this if the destination is on a slow/distant
+# network and legitimate transfers are being aborted as unreachable.
+connect-timeout-ms: 3000
+
+# How long (in milliseconds), after the TCP connection succeeds, to wait for
+# the destination to reply with its Minecraft status response. A destination
+# that accepts the TCP connection but never replies (e.g. a non-Minecraft
+# service on that port, or a proxy silently dropping the handshake - see
+# "debug" below) will fail here rather than at connect-timeout-ms.
+ping-timeout-ms: 3000
+
+# ----------------------------------------------------------------------------
+# Mass-transfer pacing
+# ----------------------------------------------------------------------------
+
+# Default delay, in ticks (20 ticks = 1 second), between each player's
+# transfer when the command targets more than one player at once (e.g.
+# "/safetransfer @a ..."). Prevents dumping every player on the destination
+# in the same tick and causing a login stampede. Override per-command with
+# the optional [delayTicks] argument; this value is only the default.
+default-delay-ticks: 20
+
+# ----------------------------------------------------------------------------
+# Debugging
+# ----------------------------------------------------------------------------
+
+# When true, logs verbose diagnostics to console for every /safetransfer
+# invocation:
+#   - every DNS hop tried while resolving the destination (SRV lookups,
+#     CNAME chains, which pattern matched)
+#   - the exact host/port/protocol version used for the status ping, and
+#     whether it succeeded
+#   - full stack traces on any resolve or ping failure (a plain "aborted"
+#     chat message only shows the short reason, not the cause)
+# Leave this off for normal day-to-day use - it's noisy. Turn it on when a
+# transfer that should work is being reported as unreachable, so you can see
+# exactly which DNS record was missing or which step timed out.
+debug: false
+
+# ----------------------------------------------------------------------------
+# Messages
+# ----------------------------------------------------------------------------
+# All player-facing messages, in MiniMessage format:
+#   https://docs.advntr.dev/minimessage/format.html
+# Quick reference: <red>, <green>, <gray>, <white>, <gold>, <bold>, <italic>,
+# <click:...>, <hover:...>, and gradients like <gradient:blue:green>.
+#
+# Each message below is preceded by a comment listing the placeholders it
+# receives - only use placeholders listed for that specific message, others
+# will not be substituted. Deleting a message key (or leaving it blank)
+# causes that message to be silently skipped rather than sent.
+messages:
+
+  # Sent when a sender without the "safetransfer.use" permission runs the command.
+  # Placeholders: none
+  no-permission: "<red>You do not have permission to use this command."
+
+  # Sent when the command is run with too few arguments.
+  # Placeholders: <command> - the alias/label actually typed (e.g. "safetransfer" or "st")
+  usage: "<red>Usage: /<command> <target> <host[:port]> [delayTicks]"
+
+  # Sent when the optional [delayTicks] argument isn't a whole number.
+  # Placeholders: none
+  invalid-delay: "<red>Invalid delay, expected a whole number of ticks."
+
+  # Sent after "/safetransfer reload" finishes re-reading config.yml.
+  # Placeholders: none
+  reloaded: "<green>SafeTransfer config reloaded."
+
+  # Sent when the <target> argument (player name or selector) matched no online players.
+  # Placeholders: <target> - the raw target argument as typed
+  no-players-matched: "<red>No online players matched \"<target>\"."
+
+  # Sent when <target> starts with "@" but is not a valid entity selector.
+  # Placeholders: <reason> - the selector parser's error message
+  invalid-selector: "<red>Invalid selector: <reason>"
+
+  # Sent when the destination failed the pre-transfer status ping. No
+  # players are transferred when this fires - the whole command is aborted.
+  # Placeholders: <host>, <port> - the resolved connection target
+  #               <reason>       - short failure reason (e.g. "Connection refused",
+  #                                or an exception class name like "EOFException"
+  #                                when no descriptive message was available -
+  #                                enable "debug" above for the full stack trace)
+  aborted: "<red>Aborted:</red> <gray>could not reach <white><host>:<port></white> (<reason>). No players were transferred."
+
+  # Sent once the destination passes the status ping, right before players
+  # start being queued/transferred.
+  # Placeholders: <host>, <port> - the resolved connection target
+  #               <count>        - number of players about to be transferred
+  #               <delay>        - ticks between each transfer (the resolved
+  #                                default-delay-ticks, or the command's
+  #                                [delayTicks] override)
+  reachable: "<green><white><host>:<port></white> is reachable.</green> <gray>Queuing <white><count></white> player(s), <white><delay></white> tick(s) apart.</gray>"
+
+  # Sent to the command sender each time an individual player is actually transferred.
+  # Placeholders: <player> - the transferred player's name
+  transferred: "<green>Transferred <white><player></white>."
