@@ -10,6 +10,7 @@
     <packaging>jar</packaging>
 
     <name>SafeTransfer</name>
+    <url>https://github.com/HippoDev03/SafeTransfer</url>
 
     <properties>
         <java.version>21</java.version>
@@ -59,9 +60,13 @@
                          don't fail the CI build over missing tags/doclint nitpicks -
                          but DO fail on real generation errors (failOnError stays true)
                          so a broken build shows up as a build failure, not a confusing
-                         "apidocs directory doesn't exist" error two stages later. -->
+                         "apidocs directory doesn't exist" error two stages later.
+                         Deliberately NOT setting quiet=true: this plugin detects real
+                         javadoc-tool errors by scanning its console output for "error:"
+                         lines, and quiet mode suppresses most of that output, which can
+                         make a genuine failure go undetected (exit 0, no files written) -
+                         exactly what happened here. -->
                     <doclint>none</doclint>
-                    <quiet>true</quiet>
                 </configuration>
             </plugin>
         </plugins>
@@ -72,6 +77,22 @@
             </resource>
         </resources>
     </build>
+
+    <reporting>
+        <plugins>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-project-info-reports-plugin</artifactId>
+                <!-- Pinned (rather than left to resolve "whatever's newest", which is what
+                     triggered the "empty version" warning): 3.9.0 is built against Doxia 2,
+                     but the default maven-site-plugin still resolves Doxia 1 unless bumped
+                     too, so mixing them throws LinkageError on Sink.verbatim() at report
+                     time. 3.4.5 is the last release built against Doxia 1, so it matches
+                     what the default site plugin actually provides. -->
+                <version>3.4.5</version>
+            </plugin>
+        </plugins>
+    </reporting>
 
     <repositories>
         <repository>

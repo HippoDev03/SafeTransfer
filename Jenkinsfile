@@ -27,8 +27,17 @@ pipeline {
 
         stage('Javadoc') {
             steps {
-                sh 'mvn -B -ntp javadoc:javadoc'
-                javadoc javadocDir: 'target/site/apidocs', keepAll: true
+                // -e for full stack traces if this ever fails again - the
+                // javadoc plugin's own error detection has been unreliable
+                // (see pom.xml comment), so we verify the real output below
+                // rather than trusting a clean exit code alone.
+                sh 'mvn -B -ntp -e site'
+                script {
+                    if (!fileExists('target/site/index.html')) {
+                        error 'javadoc:javadoc reported success but target/site/apidocs/index.html was not produced - check the mvn output above for the real error.'
+                    }
+                }
+                javadoc javadocDir: 'target/site/', keepAll: true
             }
         }
     }
