@@ -97,13 +97,22 @@ public final class TransferService {
                     int protocolVersion = Bukkit.getUnsafe().getProtocolVersion();
                     StatusPinger pinger = new StatusPinger(connectTimeoutMs, readTimeoutMs, protocolVersion, debug);
 
-                    try {
-                        pinger.ping(resolved);
-                        return new PingResult(resolved, null);
-                    } catch (Exception e) {
-                        String reason = e.getMessage() != null ? e.getMessage() : e.getClass().getSimpleName();
-                        return new PingResult(resolved, reason);
+                    // First status ping to a destination sometimes fails transiently (e.g. the
+                    // remote server hasn't finished waking up yet), so retry a few times before
+                    // reporting unreachable.
+                    int maxAttempts = Math.max(1, plugin.getConfig().getInt("ping-retries", 3));
+                    String reason = null;
+                    for (int attempt = 1; attempt <= maxAttempts; attempt++) {
+                        try {
+                            pinger.ping(resolved);
+                            return new PingResult(resolved, null);
+                        } catch (Exception e) {
+                            reason = e.getMessage() != null ? e.getMessage() : e.getClass().getSimpleName();
+                            debug.log("Status ping attempt " + attempt + "/" + maxAttempts
+                                    + " to " + resolved.host() + ":" + resolved.port() + " failed: " + reason);
+                        }
                     }
+                    return new PingResult(resolved, reason);
                 });
     }
 

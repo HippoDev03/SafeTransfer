@@ -33,6 +33,14 @@ connect-timeout-ms: 3000
 # "debug" below) will fail here rather than at connect-timeout-ms.
 ping-timeout-ms: 3000
 
+# Number of times to attempt the status ping before giving up and reporting
+# the destination as unreachable. The first ping to a destination sometimes
+# fails transiently (e.g. the remote server hasn't finished waking up yet),
+# so retrying a couple of times avoids a false "aborted" on an otherwise
+# healthy destination. Each retry is subject to the timeouts above. Set to 1
+# to disable retrying.
+ping-retries: 3
+
 # ----------------------------------------------------------------------------
 # Mass-transfer pacing
 # ----------------------------------------------------------------------------
